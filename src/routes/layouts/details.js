@@ -15,7 +15,8 @@ import {
   TabPane,
   Badge,
   CardSubtitle,
-  CardTitle
+  CardTitle,
+  CardImg
 } from "reactstrap";
 import Rating from "Components/Rating";
 import { SmallLineChart } from "Components/Charts";
@@ -56,6 +57,7 @@ export default class DetailsLayout extends Component {
   }
 
   render() {
+    console.log("ssssss:"+ this.props.match.params.id);
     return (
       <Fragment>
         <Row>
@@ -267,6 +269,10 @@ export default class DetailsLayout extends Component {
                     </Row>
 
                     <Card className="mb-4">
+                        <CardImg
+                            top
+                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT35cQyZ8BlvYh0m-dCuk9-UjXNkK1j1lPu4bFxZx0whaKE6Plyww"
+                        />
                       <CardBody>
                         <CardTitle>
                         <IntlMessages id="layouts.popularity" />

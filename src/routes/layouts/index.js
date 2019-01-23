@@ -14,7 +14,7 @@ const Layouts = ({ match }) => (
             <Route path={`${match.url}/data-list`} component={dataList} />            
             <Route path={`${match.url}/thumb-list`} component={thumbList} />            
             <Route path={`${match.url}/image-list`} component={imageList} />            
-            <Route path={`${match.url}/details`} component={details} />            
+            <Route path={`${match.url}/Detail/:id`} component={details} />
             <Route path={`${match.url}/search`} component={search} />  
             <Redirect to="/error" />
           
