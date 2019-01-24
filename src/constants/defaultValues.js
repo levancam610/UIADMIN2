@@ -9,12 +9,12 @@ export const localeOptions=[
 ];
 
 export const firebaseConfig = {
-    apiKey: "AIzaSyBBksq-Asxq2M4Ot-75X19IyrEYJqNBPcg",
-    authDomain: "gogo-react-login.firebaseapp.com",
-    databaseURL: "https://gogo-react-login.firebaseio.com",
-    projectId: "gogo-react-login",
-    storageBucket: "gogo-react-login.appspot.com",
-    messagingSenderId: "216495999563"
+    apiKey: "AIzaSyD634xUquHDI7VftKFS_o8gKH8pvsJ3FLI",
+    authDomain: "shopcode-cd861.firebaseapp.com",
+    databaseURL: "https://shopcode-cd861.firebaseio.com",
+    projectId: "shopcode-cd861",
+    storageBucket: "shopcode-cd861.appspot.com",
+    messagingSenderId: "387176100957"
 };
 
 

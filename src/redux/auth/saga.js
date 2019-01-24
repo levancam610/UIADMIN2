@@ -24,6 +24,9 @@ function* loginWithEmailPassword({ payload }) {
     const { history } = payload;
     try {
         const loginUser = yield call(loginWithEmailPasswordAsync, email, password);
+        console.log("ihihih");
+        console.log(email)
+        console.log(password)
         if (!loginUser.message) {
             localStorage.setItem('user_id', loginUser.user.uid);
             yield put(loginUserSuccess(loginUser));
@@ -48,6 +51,9 @@ function* registerWithEmailPassword({ payload }) {
     const { history } = payload
     try {
         const registerUser = yield call(registerWithEmailPasswordAsync, email, password);
+        console.log("hihi")
+        console.log(email)
+        console.log(password)
         if (!registerUser.message) {
             localStorage.setItem('user_id', registerUser.user.uid);
             yield put(registerUserSuccess(registerUser));

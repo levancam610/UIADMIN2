@@ -8,5 +8,6 @@ const database = firebase.database();
 
 export {
     auth,
-    database
+    database,
+    firebase
 };

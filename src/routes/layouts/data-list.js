@@ -5,7 +5,6 @@ import {
   Card,
   CustomInput,
   Button,
-  Modal,
   ModalHeader,
   ModalBody,
   ModalFooter,
@@ -21,7 +20,9 @@ import {
   CardImg,
   Label,
   CardText,
-  Badge
+  Badge,
+    Modal
+
 } from "reactstrap";
 import { NavLink } from "react-router-dom";
 import Select from "react-select";
@@ -31,17 +32,32 @@ import classnames from "classnames";
 import IntlMessages from "Util/IntlMessages";
 import { Colxx, Separator } from "Components/CustomBootstrap";
 import { BreadcrumbItems } from "Components/BreadcrumbContainer";
-
+import  firebase  from "firebase"
 import Pagination from "Components/List/Pagination";
 import mouseTrap from "react-mousetrap";
+
 import axios from 'axios';
 import FineUploaderTraditional from "fine-uploader-wrappers";
 import Gallery from "react-fine-uploader";
+import { Upload, Icon, modal } from 'antd';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
+import 'antd/dist/antd.css';
 function collect(props) {
   return { data: props.data };
 }
 
+
+const config = {
+    apiKey: "AIzaSyD634xUquHDI7VftKFS_o8gKH8pvsJ3FLI",
+    authDomain: "shopcode-cd861.firebaseapp.com",
+    databaseURL: "https://shopcode-cd861.firebaseio.com",
+    projectId: "shopcode-cd861",
+    storageBucket: "shopcode-cd861.appspot.com",
+    messagingSenderId: "387176100957"
+};
+if (!firebase.apps.length) {
+    firebase.initializeApp(config);
+}
 const uploader = new FineUploaderTraditional({
     options: {
         chunking: {
@@ -96,13 +112,19 @@ class DataListLayout extends Component {
           displayOptionsIsOpen: false,
           isLoading: false,
           List: [],
-          Form: {
               name: "",
               price: 0,
               amount: 0,
               categoryId: 0,
 
-          }
+          previewVisible: false,
+          previewImage: '',
+          fileList: [{
+              uid: '-1',
+              name: 'xxx.png',
+              status: 'done',
+              url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
+          }],
       };
     }
     componentWillMount() {
@@ -116,7 +138,9 @@ class DataListLayout extends Component {
         return false;
       });
     }
-
+    onSubmit = e =>{
+        e.preventDefault();
+    }
     toggleModal() {
       this.setState({
         modalOpen: !this.state.modalOpen
@@ -243,7 +267,75 @@ class DataListLayout extends Component {
     componentDidMount() {
       this.dataListRender();
     }
+    handleCancel = () => this.setState({ previewVisible: false });
+    handlePreview = file => {
+        this.setState({
+            previewImage: file.url || file.thumbUrl,
+            previewVisible: true
+        });
+    };
+    handleChange = ({ fileList }) => this.setState({ fileList });
+    uploadImageToFirebase = file => {
+        this.setState({show: true, progress: 0})
+        var that = this;
+        console.log(file.name);
+        console.log("asdasd");
 
+        // Create the file metadata
+        var metadata = {
+            contentType: "image/*"
+        };
+        var storageRef = firebase.storage().ref();
+        // Upload file and metadata to the object 'images/mountains.jpg'
+        var uploadTask = storageRef
+            .child("images/" + file.name)
+            .put(file, metadata);
+
+        // Listen for state changes, errors, and completion of the upload.
+        uploadTask.on(
+            firebase.storage.TaskEvent.STATE_CHANGED, // or 'state_changed'
+            function(snapshot) {
+                // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+                var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                console.log("Upload is " + progress + "% done");
+                that.setState({progress: progress})
+                switch (snapshot.state) {
+                    case firebase.storage.TaskState.PAUSED: // or 'paused'
+                        console.log("Upload is paused");
+                        break;
+                    case firebase.storage.TaskState.RUNNING: // or 'running'
+                        console.log("Upload is running");
+                        break;
+                }
+            },
+            function(error) {
+                console.log(error);
+            },
+            function() {
+                // Upload completed successfully, now we can get the download URL
+                uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                    console.log("File available at", downloadURL);
+                    console.log(that.state.IdClick);
+                  /*  var data = {
+                        link: downloadURL,
+                        clothesId: that.state.IdClick
+                    }
+                    const api = "http://localhost:8080/api/clothes/uploadImage";
+                    axios.post( api,JSON.stringify(data)).then(function(){
+                        that.setState({show: false})
+                        message.success('Tải lên thành công');
+                    })
+                        .catch(function(){
+                            message.error("Đã có lỗi");
+                        });*/
+                });
+            }
+        );
+    };
+   onChange = event =>{
+        this.setState({[event.target.name]: event.target.value});
+        console.log(this.state.name)
+    }
     dataListRender() {
 
       const {selectedPageSize,currentPage,selectedOrderOption,search} = this.state;
@@ -326,6 +418,13 @@ class DataListLayout extends Component {
     };
 
     render() {
+        const uploadButton = (
+            <div>
+                <Icon type="plus" />
+                <div className="ant-upload-text">Upload</div>
+            </div>
+        );
+        const { previewVisible, previewImage, fileList } = this.state;
       const startIndex= (this.state.currentPage-1)*this.state.selectedPageSize
       const endIndex= (this.state.currentPage)*this.state.selectedPageSize
       const {messages} = this.props.intl;
@@ -366,15 +465,15 @@ class DataListLayout extends Component {
                         <Label className="mt-4">
                           <IntlMessages id="layouts.product-name" />
                         </Label>
-                        <Input />
+                        <Input onChange={this.onChange} name="name"/>
                           <Label className="mt-4">
                               <IntlMessages id="layouts.price" />
                           </Label>
-                          <Input />
+                          <Input onChange={this.onChange} name="price"/>
                           <Label className="mt-4">
                               <IntlMessages id="layouts.amount" />
                           </Label>
-                          <Input />
+                          <Input onChange={this.onChange} name="amount"/>
                         <Label className="mt-4">
                           <IntlMessages id="layouts.category" />
                         </Label>
@@ -382,22 +481,35 @@ class DataListLayout extends Component {
                           components={{ Input: CustomSelectInput }}
                           className="react-select"
                           classNamePrefix="react-select"
-                          name="form-field-name"
+                          name="categoryId"
+                          onChange={this.onChange}
                           options={this.state.categories}
                         />
                         <Label className="mt-4">
                           <IntlMessages id="layouts.image"/>
                         </Label>
-                          <Gallery
-                              animationsDisabled={true}
-                              uploader={uploader}
-                              deleteButton-children={<span>Delete</span>}
-                              fileInput-children={<span />}
-                          >
-                              <span className="react-fine-uploader-gallery-dropzone-content">
-                                <IntlMessages id="form-components.drop-files-here" />
-                              </span>
-                          </Gallery>
+                          <div className="clearfix">
+                              <Upload
+                                  listType="picture-card"
+                                  fileList={fileList}
+                                  onPreview={this.handlePreview}
+                                  onChange={this.handleChange}
+                                  data={this.uploadImageToFirebase}
+
+                              >
+                                  {uploadButton}
+                              </Upload>
+                                  <Modal
+                                      isOpen={previewVisible}
+                                      toggle={this.handleCancel}
+                                      backdrop="static"
+                                  >
+                                      <ModalHeader toggle={this.handleCancel}>
+                                      </ModalHeader>
+                                  <img alt="example" style={{ width: "100%" }} src={previewImage} />
+
+                              </Modal>
+                          </div>
                         <Label className="mt-4">
                           <IntlMessages id="layouts.status" />
                         </Label>
@@ -422,7 +534,7 @@ class DataListLayout extends Component {
                         >
                           <IntlMessages id="layouts.cancel" />
                         </Button>
-                        <Button color="primary" onClick={this.toggleModal}>
+                        <Button color="primary" onClick={this.onSubmit}>
                           <IntlMessages id="layouts.submit" />
                         </Button>{" "}
                       </ModalFooter>
