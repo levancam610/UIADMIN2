@@ -39,14 +39,16 @@ import mouseTrap from "react-mousetrap";
 import axios from 'axios';
 import FineUploaderTraditional from "fine-uploader-wrappers";
 import Gallery from "react-fine-uploader";
-import { Upload, Icon, modal } from 'antd';
+import { Upload, Icon,  Radio, message } from 'antd';
 import { ContextMenu, MenuItem, ContextMenuTrigger } from "react-contextmenu";
 import 'antd/dist/antd.css';
 function collect(props) {
   return { data: props.data };
 }
-
-
+const RadioGroup = Radio.Group;
+message.config({
+    top: 150,
+});
 const config = {
     apiKey: "AIzaSyD634xUquHDI7VftKFS_o8gKH8pvsJ3FLI",
     authDomain: "shopcode-cd861.firebaseapp.com",
@@ -74,6 +76,7 @@ const uploader = new FineUploaderTraditional({
 });
 const apiUrl2 ="http://api.crealeaf.com/cakes/paging"
 const apiUrl ="http://localhost:8080/api/clothesList"
+const apiUrlCategory ="http://localhost:8080/api/category"
 const categoryId = 2 //Quan
 class DataListLayout extends Component {
     constructor(props) {
@@ -91,10 +94,11 @@ class DataListLayout extends Component {
           pageSizes: [10, 20, 30, 50, 100],
           selectedPageSize: 10,
           categories: [
-              {label: 'Cakes', value: 1, key: 0},
+           /*   {label: 'Cakes', value: 1, key: 0},
               {label: 'Cupcakes', value: 2, key: 1},
-              {label: 'Desserts', value: 3, key: 2},
+              {label: 'Desserts', value: 3, key: 2},*/
           ],
+          defaultOption: null,
           orderOptions: [
               {column: "title", label: "Product Name"},
               {column: "category", label: "Category"},
@@ -112,11 +116,12 @@ class DataListLayout extends Component {
           displayOptionsIsOpen: false,
           isLoading: false,
           List: [],
-              name: "",
-              price: 0,
-              amount: 0,
-              categoryId: 0,
-
+          name: "",
+          price: 0,
+          amount: 0,
+          categoryId: 0,
+          type: 1   ,
+          gender:"Nam",
           previewVisible: false,
           previewImage: '',
           fileList: [{
@@ -125,6 +130,8 @@ class DataListLayout extends Component {
               status: 'done',
               url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
           }],
+          fileImage:{},
+          avatar: ""
       };
     }
     componentWillMount() {
@@ -138,13 +145,34 @@ class DataListLayout extends Component {
         return false;
       });
     }
-    onSubmit = e =>{
-        e.preventDefault();
+    onSubmit = () =>{
+        var that = this;
+        var data = {
+            Name: this.state.name,
+            CategoryId: this.state.categoryId,
+            Price: Number(this.state.price),
+            Amount: Number(this.state.amount),
+            Type: this.state.type,
+            Gender: this.state.gender
+         //   Image: this.state.name,
+
+        }
+        console.log(data);
+        const url = "http://localhost:8080/api/clothes/create";
+        axios.post( url,JSON.stringify(data) ).then(function(){
+            message.success("Thêm thành công");
+            that.setState({modalOpen: false});
+        }).catch(function(){
+            message.error("Đã có lỗi");
+            that.setState({modalOpen: false});
+        });
+
     }
     toggleModal() {
       this.setState({
         modalOpen: !this.state.modalOpen
       });
+        console.log("ahihi");
     }
     toggleDisplayOptions() {
       this.setState({ displayOptionsIsOpen: !this.state.displayOptionsIsOpen });
@@ -266,6 +294,25 @@ class DataListLayout extends Component {
     }
     componentDidMount() {
       this.dataListRender();
+      this.getCategory();
+
+    }
+    getCategory = ()=>{
+        var rs = [];
+        axios.get(apiUrlCategory)
+            .then(res => {
+                return res.data
+            }).then(data=>{
+            for(var i=0; i<data.length; i++){;
+                var item = {
+                    label: data[i].Name,
+                    value: data[i].Id,
+                    key: data[i].Id,
+                }
+                rs.push(item);
+            }
+            this.setState({categories: rs});
+        })
     }
     handleCancel = () => this.setState({ previewVisible: false });
     handlePreview = file => {
@@ -275,6 +322,13 @@ class DataListLayout extends Component {
         });
     };
     handleChange = ({ fileList }) => this.setState({ fileList });
+    getfile = file =>{
+        this.setState({fileImage: file});
+        console.log(this.state.fileImage);
+        console.log(file);
+
+    }
+
     uploadImageToFirebase = file => {
         this.setState({show: true, progress: 0})
         var that = this;
@@ -334,7 +388,10 @@ class DataListLayout extends Component {
     };
    onChange = event =>{
         this.setState({[event.target.name]: event.target.value});
-        console.log(this.state.name)
+    }
+    onChangeSelect = value =>{
+        this.setState({categoryId: value.value});
+        this.setState({defaultOption: value});
     }
     dataListRender() {
 
@@ -371,7 +428,7 @@ class DataListLayout extends Component {
                 console.log(data);
         });
     }
-      async Delete(id) {
+    async Delete(id) {
           await axios.delete("http://localhost:8080/api/clothes/delete/" + id)
              .then(function (response) {
 
@@ -469,11 +526,11 @@ class DataListLayout extends Component {
                           <Label className="mt-4">
                               <IntlMessages id="layouts.price" />
                           </Label>
-                          <Input onChange={this.onChange} name="price"/>
+                          <Input type="number" onChange={this.onChange} name="price"/>
                           <Label className="mt-4">
                               <IntlMessages id="layouts.amount" />
                           </Label>
-                          <Input onChange={this.onChange} name="amount"/>
+                          <Input type="number" onChange={this.onChange} name="amount"/>
                         <Label className="mt-4">
                           <IntlMessages id="layouts.category" />
                         </Label>
@@ -482,8 +539,9 @@ class DataListLayout extends Component {
                           className="react-select"
                           classNamePrefix="react-select"
                           name="categoryId"
-                          onChange={this.onChange}
+                          onChange={this.onChangeSelect}
                           options={this.state.categories}
+                          value={this.state.defaultOption}
                         />
                         <Label className="mt-4">
                           <IntlMessages id="layouts.image"/>
@@ -494,7 +552,7 @@ class DataListLayout extends Component {
                                   fileList={fileList}
                                   onPreview={this.handlePreview}
                                   onChange={this.handleChange}
-                                  data={this.uploadImageToFirebase}
+                                  data={this.getfile}
 
                               >
                                   {uploadButton}
@@ -510,21 +568,24 @@ class DataListLayout extends Component {
 
                               </Modal>
                           </div>
+                          <Label className="mt-4">
+                              <IntlMessages id="layouts.gender" />
+                          </Label>
+                          <div>
+                              <RadioGroup name="gender" onChange={this.onChange} value={this.state.gender}>
+                                  <Radio value="Nam">Nam</Radio>
+                                  <Radio value="Nữ">Nữ</Radio>
+                              </RadioGroup>
+                          </div>
                         <Label className="mt-4">
-                          <IntlMessages id="layouts.status" />
+                          <IntlMessages id="layouts.type" />
                         </Label>
-                        <CustomInput
-                          type="radio"
-                          id="exCustomRadio"
-                          name="customRadio"
-                          label="ON HOLD"
-                        />
-                        <CustomInput
-                          type="radio"
-                          id="exCustomRadio2"
-                          name="customRadio"
-                          label="PROCESSED"
-                        />
+                          <div>
+                              <RadioGroup name="type" onChange={this.onChange} value={this.state.type}>
+                                  <Radio value={1}>Quần</Radio>
+                                  <Radio value={2}>Áo</Radio>
+                              </RadioGroup>
+                          </div>
                       </ModalBody>
                       <ModalFooter>
                         <Button
