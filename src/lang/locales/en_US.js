@@ -176,6 +176,7 @@ module.exports = {
   "layouts.amount": "Amount",
   "layouts.price": "Price",
   "layouts.image": "Avatar",
+    "layouts.listImage": "Image List",
   "layouts.gender": "Gender",
   "layouts.description": "Description",
   "layouts.status": "Status",

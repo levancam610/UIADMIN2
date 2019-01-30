@@ -77,6 +77,7 @@ const uploader = new FineUploaderTraditional({
 const apiUrl2 ="http://api.crealeaf.com/cakes/paging"
 const apiUrl ="http://localhost:8080/api/clothesList"
 const apiUrlCategory ="http://localhost:8080/api/category"
+const apiUrlImageClothes="http://localhost:8080/api/clothesImage"
 const categoryId = 1 //Quan
 class DataListLayout extends Component {
     constructor(props) {
@@ -107,6 +108,7 @@ class DataListLayout extends Component {
           selectedOrderOption: {column: "name", label: "Name"},
           dropdownSplitOpen: false,
           modalOpen: false,
+          modalImage: false,
           currentPage: 1,
           totalItemCount: 0,
           totalPage: 1,
@@ -124,11 +126,17 @@ class DataListLayout extends Component {
           gender:"Nam",
           previewVisible: false,
           previewImage: '',
-          fileList: [{
+          fileList: [/*{
               uid: '-1',
               name: 'xxx.png',
               status: 'done',
               url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
+          }*/],
+          fileList2: [{
+           /*   uid: '-1',
+              name: 'xxx.png',
+              status: 'done',
+              url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',*/
           }],
           fileImage:{},
           avatar: ""
@@ -145,34 +153,94 @@ class DataListLayout extends Component {
         return false;
       });
     }
-    onSubmit = () =>{
+    onSubmit = async () =>{
         var that = this;
-        var data = {
-            Name: this.state.name,
-            CategoryId: this.state.categoryId,
-            Price: Number(this.state.price),
-            Amount: Number(this.state.amount),
-            Type: this.state.type,
-            Gender: this.state.gender
-         //   Image: this.state.name,
+        var file = this.state.fileImage;
+        this.setState({show: true, progress: 0})
+        var that = this;
+        console.log(file.name);
+        // Create the file metadata
+        var metadata = {
+            contentType: "image/*"
+        };
+        var storageRef = firebase.storage().ref();
+        // Upload file and metadata to the object 'images/mountains.jpg'
+        var uploadTask = storageRef
+            .child("images/" + file.name)
+            .put(file, metadata);
 
-        }
-        console.log(data);
-        const url = "http://localhost:8080/api/clothes/create";
-        axios.post( url,JSON.stringify(data) ).then(function(){
-            message.success("Thêm thành công");
-            that.setState({modalOpen: false});
-        }).catch(function(){
-            message.error("Đã có lỗi");
-            that.setState({modalOpen: false});
-        });
+        // Listen for state changes, errors, and completion of the upload.
+        uploadTask.on(
+            firebase.storage.TaskEvent.STATE_CHANGED, // or 'state_changed'
+            function(snapshot) {
+                // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+                var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                console.log("Upload is " + progress + "% done");
+                that.setState({progress: progress})
+                switch (snapshot.state) {
+                    case firebase.storage.TaskState.PAUSED: // or 'paused'
+                        console.log("Upload is paused");
+                        break;
+                    case firebase.storage.TaskState.RUNNING: // or 'running'
+                        console.log("Upload is running");
+                        break;
+                }
+            },
+            function(error) {
+                console.log(error);
+            },
+            function() {
+                // Upload completed successfully, now we can get the download URL
+                uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                    console.log("File available at", downloadURL);
+                    var data = {
+                        Name: that.state.name,
+                        CategoryId: that.state.categoryId,
+                        Price: Number(that.state.price),
+                        Amount: Number(that.state.amount),
+                        Type: that.state.type,
+                        Gender: that.state.gender,
+                        Image: downloadURL
+                    }
+                    console.log(data);
+                    const url = "http://localhost:8080/api/clothes/create";
+                    axios.post( url,JSON.stringify(data) ).then(function(){
+                      message.success("Thêm thành công");
+                      that.setState({modalOpen: false});
+                      that.dataListRender();
+                    }).catch(function(){
+                      message.error("Đã có lỗi");
+                      that.setState({modalOpen: false});
+                    });
+                    /*  var data = {
+                          link: downloadURL,
+                          clothesId: that.state.IdClick
+                      }
+                      const api = "http://localhost:8080/api/clothes/uploadImage";
+                      axios.post( api,JSON.stringify(data)).then(function(){
+                          that.setState({show: false})
+                          message.success('Tải lên thành công');
+                      })
+                          .catch(function(){
+                              message.error("Đã có lỗi");
+                          });*/
+                });
+            }
+        );
+
+
+
 
     }
     toggleModal() {
       this.setState({
-        modalOpen: !this.state.modalOpen
+          modalOpen: !this.state.modalOpen
       });
-        console.log("ahihi");
+    }
+    toggleModal2 = ()=> {
+        this.setState({
+            modalImage: !this.state.modalImage
+        });
     }
     toggleDisplayOptions() {
       this.setState({ displayOptionsIsOpen: !this.state.displayOptionsIsOpen });
@@ -293,8 +361,11 @@ class DataListLayout extends Component {
       return false;
     }
     componentDidMount() {
+        console.log("kaka:"+this.state.fileList.length)
       this.dataListRender();
       this.getCategory();
+
+
 
     }
     getCategory = ()=>{
@@ -306,8 +377,8 @@ class DataListLayout extends Component {
             for(var i=0; i<data.length; i++){;
                 var item = {
                     label: data[i].Name,
-                    value: data[i].Id,
-                    key: data[i].Id,
+                    value: data[i].ID,
+                    key: data[i].ID,
                 }
                 rs.push(item);
             }
@@ -321,15 +392,13 @@ class DataListLayout extends Component {
             previewVisible: true
         });
     };
-    handleChange = ({ fileList }) => this.setState({ fileList });
+    handleChange = ({ fileList }) => this.setState({fileList: fileList });
+    handleChange2 = ({ fileList }) => this.setState({fileList2: fileList });
     getfile = file =>{
         this.setState({fileImage: file});
-        console.log(this.state.fileImage);
-        console.log(file);
-
     }
 
-    uploadImageToFirebase = file => {
+    uploadImageToFirebase = async (file) => {
         this.setState({show: true, progress: 0})
         var that = this;
         console.log(file.name);
@@ -370,18 +439,32 @@ class DataListLayout extends Component {
                 uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
                     console.log("File available at", downloadURL);
                     console.log(that.state.IdClick);
-                  /*  var data = {
-                        link: downloadURL,
-                        clothesId: that.state.IdClick
+                    var data = {
+                        Name: file.name,
+                        Link: downloadURL,
+                        ClotheId: that.state.selectedItems[0]
                     }
+                    console.log(data);
                     const api = "http://localhost:8080/api/clothes/uploadImage";
                     axios.post( api,JSON.stringify(data)).then(function(){
                         that.setState({show: false})
                         message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+                        message.success('Tải lên thành công');
+
                     })
                         .catch(function(){
                             message.error("Đã có lỗi");
-                        });*/
+                        });
                 });
             }
         );
@@ -391,7 +474,7 @@ class DataListLayout extends Component {
     }
     onChangeSelect = value =>{
         this.setState({categoryId: value.value});
-        this.setState({defaultOption: value});
+        //this.setState({defaultOption: value});
     }
     dataListRender() {
 
@@ -457,7 +540,34 @@ class DataListLayout extends Component {
                   modalOpen :true
               });
               break;
+          case "image":
+              var rs = [];
+              var id = this.state.selectedItems[0];
+              console.log(id);
+             /* uid: '-1',
+                  name: 'xxx.png',
+              status: 'done',
+              url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',*/
+              axios.get(apiUrlImageClothes+"/"+id)
+                  .then(res => {
+                      return res.data
+                  }).then(data=>{
+                  for(var i=0; i<data.length; i++){;
+                      var item = {
+                          uid: data[i].ID,
+                          name: data[i].Name,
+                          url: data[i].Link
+                      }
+                      rs.push(item);
+                  }
 
+                  console.log(rs);
+                  this.setState({
+                      modalImage :true,
+                      fileList2: rs
+                  });
+              })
+              break;
       }
 
 
@@ -481,7 +591,7 @@ class DataListLayout extends Component {
                 <div className="ant-upload-text">Upload</div>
             </div>
         );
-        const { previewVisible, previewImage, fileList } = this.state;
+        const { previewVisible, previewImage, fileList, fileList2 } = this.state;
       const startIndex= (this.state.currentPage-1)*this.state.selectedPageSize
       const endIndex= (this.state.currentPage)*this.state.selectedPageSize
       const {messages} = this.props.intl;
@@ -509,6 +619,39 @@ class DataListLayout extends Component {
                     </Button>
                     {"  "}
 
+                    <Modal
+                        isOpen={this.state.modalImage}
+                        toggle={this.toggleModal2}
+                        backdrop="static"
+                        zIndex={1005}
+
+                    >
+                        <ModalHeader toggle={this.toggleModal2}>
+                            Image List
+                        </ModalHeader>
+                        <div className="clearfix">
+                            <Upload
+                                listType="picture-card"
+                                fileList={fileList2}
+                                onPreview={this.handlePreview}
+                                onChange={this.handleChange2}
+                                data={this.uploadImageToFirebase}
+
+                            >
+                                {uploadButton}
+                            </Upload>
+                            <Modal
+                                isOpen={previewVisible}
+                                toggle={this.handleCancel}
+                                backdrop="static"
+                            >
+                                <ModalHeader toggle={this.handleCancel}>
+                                </ModalHeader>
+                                <img alt="example" style={{ width: "100%" }} src={previewImage} />
+
+                            </Modal>
+                        </div>
+                    </Modal>
                     <Modal
                       isOpen={this.state.modalOpen}
                       toggle={this.toggleModal}
@@ -541,7 +684,6 @@ class DataListLayout extends Component {
                           name="categoryId"
                           onChange={this.onChangeSelect}
                           options={this.state.categories}
-                          value={this.state.defaultOption}
                         />
                         <Label className="mt-4">
                           <IntlMessages id="layouts.image"/>
@@ -549,13 +691,12 @@ class DataListLayout extends Component {
                           <div className="clearfix">
                               <Upload
                                   listType="picture-card"
-                                  fileList={fileList}
                                   onPreview={this.handlePreview}
                                   onChange={this.handleChange}
                                   data={this.getfile}
 
                               >
-                                  {uploadButton}
+                                  {fileList.length >= 1 ? null : uploadButton}
                               </Upload>
                                   <Modal
                                       isOpen={previewVisible}
@@ -568,6 +709,7 @@ class DataListLayout extends Component {
 
                               </Modal>
                           </div>
+
                           <Label className="mt-4">
                               <IntlMessages id="layouts.gender" />
                           </Label>
@@ -963,6 +1105,12 @@ class DataListLayout extends Component {
             >
               <i className="simple-icon-note" /> <span>Edit</span>
             </MenuItem>
+              <MenuItem
+                  onClick={this.onContextMenuClick}
+                  data={{ action: "image" }}
+              >
+                  <i className="simple-icon-trash" /> <span>Image</span>
+              </MenuItem>
             <MenuItem
               onClick={this.onContextMenuClick}
               data={{ action: "delete" }}
