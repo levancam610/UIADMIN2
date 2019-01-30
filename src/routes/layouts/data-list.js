@@ -77,7 +77,7 @@ const uploader = new FineUploaderTraditional({
 const apiUrl2 ="http://api.crealeaf.com/cakes/paging"
 const apiUrl ="http://localhost:8080/api/clothesList"
 const apiUrlCategory ="http://localhost:8080/api/category"
-const categoryId = 2 //Quan
+const categoryId = 1 //Quan
 class DataListLayout extends Component {
     constructor(props) {
       super(props);
@@ -757,26 +757,26 @@ class DataListLayout extends Component {
                       lg="4"
                       xl="3"
                       className="mb-3"
-                      key={product.id}
+                      key={product.ID}
                     >
                       <ContextMenuTrigger
                         id="menu_id"
-                        data={product.id}
+                        data={product.ID}
                         collect={collect}
                       >
                         <Card
                           onClick={event =>
-                            this.handleCheckChange(event, product.id)
+                            this.handleCheckChange(event, product.ID)
                           }
                           className={classnames({
                             active: this.state.selectedItems.includes(
-                              product.id
+                              product.ID
                             )
                           })}
                         >
                           <div className="position-relative">
                             <NavLink
-                              to={`?p=${product.id}`}
+                              to={`?p=${product.ID}`}
                               className="w-40 w-sm-100"
                             >
                               <CardImg
@@ -799,9 +799,9 @@ class DataListLayout extends Component {
                                 <CustomInput
                                   className="itemCheck mb-0"
                                   type="checkbox"
-                                  id={`check_${product.id}`}
+                                  id={`check_${product.ID}`}
                                   checked={this.state.selectedItems.includes(
-                                    product.id
+                                    product.ID
                                   )}
                                   onChange={() => {}}
                                   label=""
@@ -821,24 +821,24 @@ class DataListLayout extends Component {
                   );
                 } else /*if (this.state.displayMode === "thumblist")*/ {
                   return (
-                    <Colxx xxs="12" key={product.Id} className="mb-3">
+                    <Colxx xxs="12" key={product.ID} className="mb-3">
                       <ContextMenuTrigger
                         id="menu_id"
-                        data={product.Id}
+                        data={product.ID}
                         collect={collect}
                       >
                         <Card
                           onClick={event =>
-                            this.handleCheckChange(event, product.Id)
+                            this.handleCheckChange(event, product.ID)
                           }
                           className={classnames("d-flex flex-row", {
                             active: this.state.selectedItems.includes(
-                              product.Id
+                              product.ID
                             )
                           })}
                         >
                           <NavLink
-                            to={`?p=${product.Id}`}
+                            to={`?p=${product.ID}`}
                             className="d-flex"
                           >
                             <img
@@ -850,11 +850,11 @@ class DataListLayout extends Component {
                           <div className="pl-2 d-flex flex-grow-1 min-width-zero">
                             <div className="card-body align-self-center d-flex flex-column flex-lg-row justify-content-between min-width-zero align-items-lg-center">
                               <NavLink
-                                to={`?p=${product.Id}`}
+                                to={`?p=${product.ID}`}
                                 className="w-40 w-sm-100"
                               >
                                 <p className="list-item-heading mb-1 truncate">
-                                  {product.Id}
+                                  {product.ID}
                                 </p>
                               </NavLink>
                               <p className="mb-1 text-muted text-small w-15 w-sm-100">
@@ -873,9 +873,9 @@ class DataListLayout extends Component {
                               <CustomInput
                                 className="itemCheck mb-0"
                                 type="checkbox"
-                                id={`check_${product.Id}`}
+                                id={`check_${product.ID}`}
                                 checked={this.state.selectedItems.includes(
-                                  product.Id
+                                  product.ID
                                 )}
                                 onChange={() => {}}
                                 label=""
